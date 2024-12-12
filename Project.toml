@@ -1,0 +1,14 @@
+name = "GhosttyExtensions"
+uuid = "64489478-8f8d-42d5-80e2-9f7f086a1b9c"
+authors = ["Peter Pieske <71228733+piechologist@users.noreply.github.com>"]
+version = "0.7.0"
+
+[deps]
+Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
+TerminalPager = "0c614874-6106-40ed-a7c2-2f1cd0bff883"
+
+[compat]
+TerminalPager = "0.6"
+julia = "1.10"
