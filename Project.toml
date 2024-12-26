@@ -1,7 +1,7 @@
 name = "GhosttyExtensions"
 uuid = "64489478-8f8d-42d5-80e2-9f7f086a1b9c"
 authors = ["Peter Pieske <71228733+piechologist@users.noreply.github.com>"]
-version = "0.7.0"
+version = "0.7.1"
 
 [deps]
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
