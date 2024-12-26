@@ -30,9 +30,9 @@ function pbpaste()
 end
 
 function set_terminal_title()
-    remote_host = haskey(ENV, "SSH_TTY") ? gethostname() * " " : ""
+    remote_host = haskey(ENV, "SSH_TTY") ? split(gethostname(), '.')[1] * " — " : ""
     project = dirname(Base.active_project())
-    title = contains(project, "/.julia/environments/") ? "♻️ @" : "♻️ "
+    title = contains(project, "/.julia/environments/") ? "julia @" : "julia "
     print("\e]2;", remote_host, title, basename(project), "\e\\")
     return nothing
 end
