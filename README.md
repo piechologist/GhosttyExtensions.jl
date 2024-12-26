@@ -1,13 +1,7 @@
 # GhosttyExtensions
 
-A Julia package that supports some advanced features of the Ghostty terminal emulator.
-
-> Note:
->
-> [Ghostty](https://ghostty.org) will be publicly released on 2024-12-31.
->
-> [WezTerm](https://wezfurlong.org/wezterm/index.html) or
-> [Kitty](https://sw.kovidgoyal.net/kitty/) should work as well.
+A Julia package that supports some advanced features of the [Ghostty](https://ghostty.org) terminal emulator.
+[WezTerm](https://wezfurlong.org/wezterm/index.html) or [Kitty](https://sw.kovidgoyal.net/kitty/) should work as well.
 
 All features work over ssh. There's only one external dependency (TerminalPager.jl) and
 _TTFP_, the time it adds to the first prompt, should not be noticeable.
@@ -107,6 +101,8 @@ TerminalPager.jl will be installed as a dependency and `@help`, `@out2pr`,
 
 ## Credits
 
+- [Ghostty](https://github.com/ghostty-org/ghostty)
+- 
 - [TerminalExtensions.jl](https://github.com/Keno/TerminalExtensions.jl)
 
 - [TerminalPager.jl](https://github.com/ronisbr/TerminalPager.jl)
