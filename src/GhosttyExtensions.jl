@@ -9,6 +9,7 @@ import Base: display
 export TerminalPager, pager, @help, @out2pr, @stdout_to_pager
 export inlineplotting, pixelsize
 export pbcopy, pbpaste
+public keyreader
 
 include("lineedit.jl")
 include("plotting.jl")
@@ -49,6 +50,34 @@ const extra_wildcards = Dict{Any,Any}(
     "\e[1;4*" => "*",   # Shift-Option-ArrowKeys
     "\e[1;10*" => "*",  # Shift-Command-ArrowKeys
 )
+
+"""
+    GhosttyExtensions.keyreader() -> nothing
+
+Put the terminal in raw mode and show the keyboard input (including escape sequences) in a
+human readable form. This function is intended for debugging and is not exported.
+"""
+function keyreader()
+    println("Press backspace twice to exit the key reader...")
+    term = REPL.Terminals.TTYTerminal("xterm", stdin, stdout, stderr)
+    REPL.Terminals.raw!(term, true)
+    exit_on_next_bksp = false
+    while true
+        c = read(stdin, Char)
+        if isprint(c)
+            print(c)
+        else
+            printstyled('\n', escape_string(string(c)); color=:red)
+        end
+        if c == '\x7f'
+            exit_on_next_bksp && break
+            exit_on_next_bksp = true
+        else
+            exit_on_next_bksp = false
+        end
+    end
+    println()
+end
 
 function __init__()
     atreplinit() do repl
