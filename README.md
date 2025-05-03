@@ -102,7 +102,7 @@ TerminalPager.jl will be installed as a dependency and `@help`, `@out2pr`,
 ## Credits
 
 - [Ghostty](https://github.com/ghostty-org/ghostty)
-- 
+
 - [TerminalExtensions.jl](https://github.com/Keno/TerminalExtensions.jl)
 
 - [TerminalPager.jl](https://github.com/ronisbr/TerminalPager.jl)
