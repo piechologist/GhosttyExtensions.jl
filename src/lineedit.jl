@@ -87,7 +87,7 @@ function run_pasteboard(s)
     return nothing
 end
 
-"""Begin or extend a selection to the of start the buffer."""
+"""Begin or extend a selection to the start of the buffer."""
 function select_to_start_of_buffer(s)
     while position(s) > 0
         LineEdit.edit_shift_move(s, LineEdit.edit_move_word_left)
@@ -95,7 +95,7 @@ function select_to_start_of_buffer(s)
     return nothing
 end
 
-"""Begin or extend a selection to the of end the buffer."""
+"""Begin or extend a selection to the end of the buffer."""
 function select_to_end_of_buffer(s)
     while !eof(LineEdit.buffer(s))
         LineEdit.edit_shift_move(s, LineEdit.edit_move_word_right)
@@ -103,7 +103,7 @@ function select_to_end_of_buffer(s)
     return nothing
 end
 
-"""Begin or extend a selection to the of start the line."""
+"""Begin or extend a selection to the start of the line."""
 function select_to_start_of_line(s)
     while position(s) > 0
         LineEdit.edit_shift_move(s, LineEdit.edit_move_left)
@@ -113,7 +113,7 @@ function select_to_start_of_line(s)
     return nothing
 end
 
-"""Begin or extend a selection to the of end the line."""
+"""Begin or extend a selection to the end of the line."""
 function select_to_end_of_line(s)
     while !eof(LineEdit.buffer(s))
         LineEdit.edit_shift_move(s, LineEdit.edit_move_right)
