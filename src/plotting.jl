@@ -62,6 +62,8 @@ end
 Return the size of the terminal window in pixels. With arguments, return a tuple that can be
 passed to a plot command to set the size of the figure.
 
+See also: `GhosttyExtensions.cellsize`, `Base.displaysize`.
+
 # Examples
 
 Make plots that are a bit smaller than half of the terminal height to fit two plots in the
@@ -76,14 +78,6 @@ plot(plot(rand(33)), heatmap(rand(33,33)), layout=(1,2), xlab="(X)", ylab="(Y)")
 Make a plot that is a third of the terminal height and as wide as possible.
 ```
 plot(rand(10); size=pixelsize(1/3))
-```
-
-The terminal's cell size can be calculated with:
-```
-height, width = pixelsize()
-rows, columns = displaysize(stdout)
-cell_height = height ÷ rows
-cell_width = width ÷ columns
 ```
 """
 function pixelsize()
@@ -104,4 +98,23 @@ function pixelsize(relative_height, relative_width=1; ratio=0)
     h = floor(relative_height * rows) * cell_height # always fill whole rows
     w = iszero(ratio) ? relative_width * width : ratio * h
     return w, h
+end
+
+"""
+    GhosttyExtensions.cellsize() -> Tuple(width::Int, height::Int)
+
+Return the size of a terminal cell in pixels. A cell is the space that's occupied by one
+character. This function is intended for debugging and is not exported.
+
+See also: `pixelsize`, `Base.displaysize`.
+"""
+function cellsize()
+    term = REPL.Terminals.TTYTerminal("xterm", stdin, stdout, stderr)
+    REPL.Terminals.raw!(term, true)
+    Base.start_reading(stdin)
+    print(stdout, "\e[16t")
+    data = readuntil(stdin, "t")
+    startswith(data, "\e[6;") || return (0, 0)
+    height, width = split(chopprefix(data, "\e[6;"), ';')
+    return parse(Int, width), parse(Int, height)
 end
