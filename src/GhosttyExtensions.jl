@@ -9,7 +9,6 @@ import Base: display
 export TerminalPager, pager, @help, @out2pr, @stdout_to_pager
 export inlineplotting, pixelsize
 export pbcopy, pbpaste
-public keyreader
 
 include("lineedit.jl")
 include("plotting.jl")
@@ -43,10 +42,11 @@ const extra_keymap = Base.AnyDict(
     "\e[1;10C" => (s, o...) -> select_to_end_of_line(s),
     "\e[1;10D" => (s, o...) -> select_to_start_of_line(s),
     # Kitty Keyboard Protocol:
+    "\e[27um" => (s, o...) -> LineEdit.activate_module(s), # Escape+m (Meta-m)
     "\e[99;9u" => (s, o...) -> copy_region(s), # Command-C
     "\e[120;9u" => (s, o...) -> cut_region(s), # Command-X
+    "\e[120;5u\e[120;5u" => (s, o...) -> LineEdit.edit_exchange_point_and_mark(s), # ^X^X
 )
-
 
 const extra_wildcards = merge!(
     Base.AnyDict(
@@ -56,32 +56,31 @@ const extra_wildcards = merge!(
         "\e[1;10*" => "*",  # Shift-Command-ArrowKeys
     ),
     # Kitty Keyboard Protocol:
-    Base.AnyDict("\e[$(n);5u" => "*" for n in 97:122), # ^A..^Z
-    Base.AnyDict("\e[$(c)" => "*" for c in 'P':'S'),   # F1..F4
+    Base.AnyDict("\e[$(n);5u" => "*" for n in [97:119; 121:122]), # ^A..^Z excl. ^X
+    Base.AnyDict("\e[$(c)" => "*" for c in 'P':'S'), # F1..F4
     Base.AnyDict(
-        "\e[27u" => "*",    # Escape
+        "\e[27um" => "*",   # Escape+m (Meta-m)
         "\e[99;9u" => "*",  # Command-C
         "\e[120;9u" => "*", # Command-X
+        "\e[120;5u\e[120;5u" => "*", # ^X^X
     ),
 )
 
-# This table translates problematic escape sequences from the Kitty Keyboard Protocol to the
-# REPL's legacy encoding. The other key bindings should work out of the box.
+# This table translates some problematic escape sequences from the Kitty Keyboard Protocol
+# to the REPL's legacy encoding. See also `extra_wildcards` above.
 #
 # The Kitty Keyboard Protocol
 # https://sw.kovidgoyal.net/kitty/keyboard-protocol/
 #   print("\e[>1u") # turn it on
 #   print("\e[<u") # turn it off
 const kitty_escape_defaults = merge!(
-    Base.AnyDict("\e[$(n);5u" => LineEdit.KeyAlias('^' * Char(n - 32)) for n in 97:122),
+    Base.AnyDict("\e[$(n);5u" => LineEdit.KeyAlias('^' * Char(n - 32)) for n in [97:119; 121:122]),
     Base.AnyDict("\e[$(c)" => LineEdit.KeyAlias("\eO$c") for c in 'P':'S'),
     Base.AnyDict(
         "\e[9;2u" => LineEdit.KeyAlias("\e[Z"),   # Shift-Tab
         "\e[9;3u" => LineEdit.KeyAlias("\e[Z"),   # Option-Tab
         "\e[13;3u" => LineEdit.KeyAlias("\e\r"),  # Option-Return
         "\e[127;3u" => LineEdit.KeyAlias("\e\b"), # Option-Backspace
-        "\e[120;5u" => LineEdit.KeyAlias("^X^X"), # ^X (this keeps the REPL from crashing)
-        "\e[27u" => LineEdit.KeyAlias("^G"),      # Escape (cancel a selection)
     ),
 )
 
