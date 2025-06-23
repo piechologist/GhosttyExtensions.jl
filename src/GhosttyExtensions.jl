@@ -9,7 +9,6 @@ import Base: display
 export TerminalPager, pager, @help, @out2pr, @stdout_to_pager
 export inlineplotting, pixelsize
 export pbcopy, pbpaste
-public keyreader
 
 include("lineedit.jl")
 include("plotting.jl")
