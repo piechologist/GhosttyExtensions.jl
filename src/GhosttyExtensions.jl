@@ -30,8 +30,8 @@ const extra_keymap = Dict{Any,Any}(
     "\eOQ" => (s, o...) -> parenthesize(s), # F2
     "\e[24~" => (s, o...) -> toggle_prefix(s, "@time"), # F12
     "\e[24;2~" => (s, o...) -> toggle_prefix(s, "@code_warntype"), # Shift-F12
-    "\e[21;5~" => (s, o...) -> copy_region(s), # Control-F10
-    "\e[23;5~" => (s, o...) -> cut_region(s), # Control-F11
+    "\e[21;13~" => (s, o...) -> copy_region(s), # Control-Command-F10
+    "\e[23;13~" => (s, o...) -> cut_region(s), # Control-Command-F11
     "\eV" => (s, o...) -> run_pasteboard(s),
     # Shift-Option-Up/Down/Right/Left:
     "\e[1;4A" => (s, o...) -> select_to_start_of_buffer(s),
@@ -44,8 +44,8 @@ const extra_keymap = Dict{Any,Any}(
 )
 
 const extra_wildcards = Dict{Any,Any}(
-    "\e[21;5~" => "*",  # Control-F10
-    "\e[23;5~" => "*",  # Control-F11
+    "\e[21;13~" => "*", # Control-Command-F10
+    "\e[23;13~" => "*", # Control-Command-F11
     "\e[24~" => "*",    # F12
     "\e[24;2~" => "*",  # Shift-F12
     "\e[1;4*" => "*",   # Shift-Option-ArrowKeys
