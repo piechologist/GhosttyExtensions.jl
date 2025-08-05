@@ -1,3 +1,11 @@
+> EXPERIMENTAL, ABANDONED BRANCH
+> 
+> This branch of GhosttyExtensions tells the terminal to switch to the Kitty Keyboard Protocol. The REPL's default
+> key bindings are ~~translated to Kitty codes~~ badly hacked and most things work. Plus, the escape key can be
+> properly bound to cancel a selection!
+> 
+> There are some rough edges e.g., escape sequences may occasionally leak into the terminal.
+
 # GhosttyExtensions
 
 A Julia package that supports some advanced features of the [Ghostty](https://ghostty.org) terminal emulator.
