@@ -1,3 +1,11 @@
+> EXPERIMENTAL BRANCH
+>
+> This work aims to make Command-C work for Ghostty and REPL selections. It's 2025, AI is overhyped, but the user
+> is still required to press different key combinations to copy a selection made with the terminal vs. a selection
+> made inside the REPL. Oh, why?!
+>
+> This is a WIP and hopefully will come to fruition with Ghostty 1.2 (due in September 2025).
+
 # GhosttyExtensions
 
 A Julia package that supports some advanced features of the [Ghostty](https://ghostty.org) terminal emulator.
