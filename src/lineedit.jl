@@ -2,24 +2,6 @@
 # Functions supplementing Julia's REPL.LineEdit.jl
 # ------------------------------------------------------------------------------------------
 
-"""Copied over from LineEdit.jl. Patched to match words containing @ or . (dot)."""
-is_non_word_char(c::Char) = c in """ \t\n\"\\'`\$><=:;|&{}()[],+-*/?%^~"""
-
-"""Copied over from LineEdit.jl. Patched to use the modified is_non_word_char()."""
-function current_word_with_dots(buf)
-    pos = position(buf)
-    if eof(buf) || is_non_word_char(peek(buf, Char))
-        LineEdit.char_move_word_left(buf, is_non_word_char)
-    end
-    LineEdit.char_move_word_right(buf, is_non_word_char)
-    pend = position(buf)
-    LineEdit.char_move_word_left(buf, is_non_word_char)
-    pbegin = position(buf)
-    word = pend > pbegin ? String(buf.data[(pbegin + 1):pend]) : ""
-    seek(buf, pos)
-    return word
-end
-
 """Copy the selection or the whole buffer to the system pasteboard."""
 function copy_region(s)
     if LineEdit.is_region_active(s)
@@ -39,32 +21,6 @@ function cut_region(s)
     else
         pbcopy(LineEdit.content(s))
         LineEdit.edit_clear(s)
-    end
-    return nothing
-end
-
-"""Call `@help` for the selection or the word under the cursor."""
-function invoke_help(s)
-    mode_name = LineEdit.guess_current_mode_name(s)
-    if mode_name ≡ :julia
-        if startswith(LineEdit.content(s), "@help ")
-            toggle_prefix(s, "@help")
-        else
-            if LineEdit.is_region_active(s)
-                word = LineEdit.content(s, LineEdit.region(s))
-            else
-                word = current_word_with_dots(LineEdit.buffer(s))
-            end
-            if !isempty(word)
-                LineEdit.edit_clear(s)
-                write(stdin.buffer, "@help ", word, "\n")
-            end
-        end
-    elseif mode_name ≡ :help
-        LineEdit.move_input_start(s)
-        write(stdin.buffer, "\b")
-        startswith(LineEdit.content(s), "?") && LineEdit.edit_delete(s)
-        LineEdit.refresh_line(s)
     end
     return nothing
 end
