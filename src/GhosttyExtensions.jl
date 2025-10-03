@@ -3,10 +3,8 @@ module GhosttyExtensions
 using Base64: base64decode, base64encode
 using REPL
 using REPL.LineEdit
-using TerminalPager
 import Base: display
 
-export TerminalPager, pager, @help, @out2pr, @stdout_to_pager
 export inlineplotting, pixelsize
 export pbcopy, pbpaste
 
@@ -26,7 +24,6 @@ include("shellintegration.jl")
 # terminal. We need to add wildcards for these bindings to let them pass through.
 # See `LineEdit.prefix_history_keymap` for the default wildcards.
 const extra_keymap = Dict{Any,Any}(
-    "\eOP" => (s, o...) -> invoke_help(s), # F1
     "\eOQ" => (s, o...) -> parenthesize(s), # F2
     "\e[24~" => (s, o...) -> toggle_prefix(s, "@time"), # F12
     "\e[24;2~" => (s, o...) -> toggle_prefix(s, "@code_warntype"), # Shift-F12
