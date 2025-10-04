@@ -83,7 +83,7 @@ function __init__()
     atreplinit() do repl
         if isinteractive() && repl isa REPL.LineEditREPL
             if isdefined(repl, :interface)
-                error("another package has already initialized the REPL")
+                error("GhosttyExtensions is not fully functional: another package has already initialized the REPL")
             end
 
             # Set up the REPL with the custom key bindings.
