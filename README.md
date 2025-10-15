@@ -3,11 +3,31 @@
 A Julia package that supports some advanced features of the [Ghostty](https://ghostty.org) terminal emulator.
 [WezTerm](https://wezfurlong.org/wezterm/index.html) or [Kitty](https://sw.kovidgoyal.net/kitty/) should work as well.
 
-All features work over ssh. There's only one external dependency (TerminalPager.jl) and
-_TTFP_, the time it adds to the first prompt, should not be noticeable.
+All features work over ssh. There's no external dependency and _TTFP_, the time it adds to the first prompt, 
+should not be noticeable.
 
 This package requires Julia 1.10 or higher. It has **not** been tested for compatibility with
 other packages that alter the REPL e.g., OhMyREPL.
+
+> [!IMPORTANT]
+>
+> ## [BREAKING] News for GhosttyExtensions 0.8.0
+>
+> The F1 key binding to invoke the Julia help and the dependency on TerminalPager.jl has been removed. 
+> TerminalPager 0.6.5 comes with its own, smart F1 binding and should be installed separately. Mind the
+> note in the [Installation](#installation) section below!
+>
+> The size of plots is slightly smaller now (5 pixels) because Ghostty 1.2 places images differently.
+>
+> Control-Command-C and Control-Command-X can be used alternatively to Meta-C and Meta-X. I'm still
+> looking for an easy solution for my pet peeve: I just want to press Command-C without thinking how
+> I made the selection (with the mouse in Ghostty or with the keyboard in the REPL). Currently, I
+> use Karabiner Elements to rebind Command-C to Control-Command-C for Ghostty. Ghostty's config must
+> contain `keybind = performable:ctrl+cmd+c=copy_to_clipboard`. GhosttyExtensions 0.8.0 takes care of
+> the rest. This works reliably and is not laggy (it's possible to do this with macOS Shortcuts but
+> it's too sluggish to be useful). If you are reading this and your muscle memory can't deal with
+> two different key combinations for the same, simple task ("Just copy this selection!"), please open 
+> an issue and I'll share the details.
 
 ## Features
 
@@ -37,12 +57,10 @@ Inline plotting:
 - In non-interactive scripts, call `inlineplotting()` once to initialize.
   Remember to wrap the plot commands with `display(...)`.
 
-- Get the size of the terminal window in pixels with `pixelsize()`. Invoke `@help pixelsize`
+- Get the size of the terminal window in pixels with `pixelsize()`. Invoke `?pixelsize`
   for examples about adjusting the plot size or setting default sizes.
 
 Extra key bindings:
-
-- **F1:** call TerminalPager's `@help` for the selection or the word under the cursor
 
 - **F2:** wrap the buffer in parentheses and move the cursor to the start
 
@@ -50,9 +68,9 @@ Extra key bindings:
 
 - **Shift-F12:** toggle the prefix `@code_warntype`
 
-- **Meta-C:** copy the selection or buffer to the system pasteboard (via OSC 52)
+- **Meta-C or Control-Command-C:** copy the selection or buffer to the system pasteboard (via OSC 52)
 
-- **Meta-X:** cut the selection or buffer to the system pasteboard (via OSC 52)
+- **Meta-X or Control-Command-X:** cut the selection or buffer to the system pasteboard (via OSC 52)
 
 - **Meta-V:** paste from the system pasteboard and execute (via OSC 52)
 
@@ -76,12 +94,29 @@ keybind = cmd+x=esc:X
 ```
 
 Meta-V is intended for automation. For instance, you may want to use AppleScript,
-[Hammerspoon](https://hammerspoon.org), or some other app to copy code from your GUI editor
-and paste & execute it in Ghostty. You'll be asked for permission to access the system
-clipboard or you can opt in permanently in `~/.config/ghostty/config`:
+[Hammerspoon](https://hammerspoon.org), [Karabiner](https://karabiner-elements.pqrs.org), 
+or some other app to copy code from your GUI editor and paste & execute it in Ghostty. 
+You'll be asked for permission to access the system clipboard or you can opt in permanently 
+in `~/.config/ghostty/config`:
 
 ```
 clipboard-read = allow
+```
+
+## Unexported functions
+
+Explore key strokes (inspired by [fish_keyreader](https://fishshell.com/docs/current/cmds/fish_key_reader.html), 
+useful for making own keybinds):
+
+```julia
+GhosttyExtensions.keyreader()
+```
+
+Return the size of a terminal cell in pixels. A cell is the space that's occupied by one
+character (useful for debugging):
+
+```julia
+GhosttyExtensions.cellsize()
 ```
 
 ## Installation
@@ -92,12 +127,16 @@ This package is not available in Julia's general registry. It can be added or de
 Pkg> develop https://github.com/piechologist/GhosttyExtensions.jl
 ```
 
-Add `using GhosttyExtensions` to your `~/.julia/config/startup.jl`. Note that loading
-GhosttyExtensions manually after the REPL has been initialized won't work.
+Add the following lines to your `~/.julia/config/startup.jl`:
 
-TerminalPager.jl will be installed as a dependency and `@help`, `@out2pr`,
-`@stdout_to_pager`, and `pager` re-exported. Please refer to its
-[documentation](https://ronisbr.github.io/TerminalPager.jl/stable/).
+```julia
+using TerminalPager # optional, recommended
+using GhosttyExtensions
+```
+
+Note that loading GhosttyExtensions manually after the REPL has been initialized won't work. 
+Also, TerminalPager must be loaded before GhosttyExtensions! The REPL in general is pretty 
+hacky and both packages use different kinds of hacks for their key bindings.
 
 ## Credits
 

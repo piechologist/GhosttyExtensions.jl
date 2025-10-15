@@ -96,6 +96,7 @@ function pixelsize(relative_height, relative_width=1; ratio=0)
     rows, columns = displaysize(stdout)
     cell_height = height ÷ rows
     h = floor(relative_height * rows) * cell_height # always fill whole rows
+    h -= 5 # account for the vertical offset "Y=5" in `display()`, see above
     w = iszero(ratio) ? relative_width * width : ratio * h
     return w, h
 end
