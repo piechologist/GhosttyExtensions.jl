@@ -17,7 +17,17 @@ other packages that alter the REPL e.g., OhMyREPL.
 > TerminalPager 0.6.5 comes with its own, smart F1 binding and should be installed separately. Mind the
 > note in the [Installation](#installation) section below!
 >
-> The size of plots is slightly smaller now (5 pixels) because Ghostty 1.2.0 places images differently.
+> The size of plots is slightly smaller now (5 pixels) because Ghostty 1.2 places images differently.
+>
+> Control-Command-C and Control-Command-X can be used alternatively to Meta-C and Meta-X. I'm still
+> looking for an easy solution for my pet peeve: I just want to press Command-C without thinking how
+> I made the selection (with the mouse in Ghostty or with the keyboard in the REPL). Currently, I
+> use Karabiner Elements to rebind Command-C to Control-Command-C for Ghostty. Ghostty's config must
+> contain `keybind = performable:ctrl+cmd+c=copy_to_clipboard`. GhosttyExtensions 0.8.0 takes care of
+> the rest. This works reliably and is not laggy (it's possible to do this with macOS Shortcuts but
+> it's too sluggish to be useful). If you are reading this and your muscle memory can't deal with
+> two different key combinations for the same, simple task ("Just copy this selection!"), please open 
+> an issue and I'll share the details.
 
 ## Features
 
@@ -58,9 +68,9 @@ Extra key bindings:
 
 - **Shift-F12:** toggle the prefix `@code_warntype`
 
-- **Meta-C:** copy the selection or buffer to the system pasteboard (via OSC 52)
+- **Meta-C or Control-Command-C:** copy the selection or buffer to the system pasteboard (via OSC 52)
 
-- **Meta-X:** cut the selection or buffer to the system pasteboard (via OSC 52)
+- **Meta-X or Control-Command-X:** cut the selection or buffer to the system pasteboard (via OSC 52)
 
 - **Meta-V:** paste from the system pasteboard and execute (via OSC 52)
 
