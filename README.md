@@ -29,6 +29,13 @@ other packages that alter the REPL e.g., OhMyREPL.
 > two different key combinations for the same, simple task ("Just copy this selection!"), please open 
 > an issue and I'll share the details.
 
+> [!NOTE]
+>
+> GhosttyExtensions 0.8.1:
+>
+> Add mouse click events for the upcoming Ghostty 1.3.0. Limitation: the cursor does not move up or down
+> on multi-line prompts, it does only move left or right on the line the cursor is on.
+
 ## Features
 
 Shell integration:
