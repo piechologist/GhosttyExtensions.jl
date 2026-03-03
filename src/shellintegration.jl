@@ -48,6 +48,14 @@ function shellintegration(repl)
     # 3. Ghostty clears the prompt on window resize and sends SIGWINCH, expecting the shell
     #    to redraw the prompt. Since the REPL doesn't catch signals at all, we ask Ghostty
     #    not to clear the prompt with the parameter redraw=0 inside the prompt start mark.
+    # 4. Ghostty v1.3.0+ emits mouse click events to move the cursor within the prompt.
+    #    Expl.: `\e[<0;6;20M` -> press left button, column 6, row 20 of the terminal window
+    #    The REPL doesn't understand this sequence and we must fall back to a number of
+    #    left/right arrow presses. Moving up/down on a multi-line prompt doesn't work
+    #    either (this would be the OSC 133 A option `cl=m` or `cl=v`). So what's left is
+    #    moving left or right on the exact line the cursor is on (option `cl=line`).
+    #    See:
+    #    https://github.com/ghostty-org/ghostty/blob/2502ca294efe5aa9722c36e25b2252b0150054e9/src/terminal/osc/parsers/semantic_prompt.zig#L218
     isexecuting = true
     project::Union{Nothing,String} = "not initialized yet"
 
@@ -65,7 +73,7 @@ function shellintegration(repl)
                 set_terminal_title()
             end
             # Prepend the prompt start mark:
-            return "\e]133;A;redraw=0\a" * (prefix isa Function ? prefix() : prefix)
+            return "\e]133;A;cl=line;redraw=0\a" * (prefix isa Function ? prefix() : prefix)
         end
 
         suffix = mode.prompt_suffix
