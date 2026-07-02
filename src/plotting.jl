@@ -10,7 +10,7 @@ struct KittyDisplay <: AbstractDisplay end
 
 Switch to inline plotting in the terminal or back to the default behavior.
 """
-function inlineplotting(inline=true)
+function inlineplotting(inline = true)
     while KittyDisplay() ∈ Base.Multimedia.displays
         Base.Multimedia.popdisplay(KittyDisplay())
     end
@@ -28,7 +28,7 @@ function display(d::KittyDisplay, x)
         if isa(x, Vector{UInt8})
             display(d, MIME"image/png"(), x)
             return nothing
-        elseif isa(x, Main.Plots.Plot)
+        elseif isdefined(Main, :Plots) && isa(x, Main.Plots.Plot)
             io = IOBuffer()
             Main.Plots.png(x, io)
             display(d, MIME"image/png"(), take!(io))
@@ -54,13 +54,14 @@ function display(d::KittyDisplay, m::MIME"image/png", png::Vector{UInt8})
 end
 
 """
-    pixelsize() -> Tuple(width::Int, height::Int)
+    pixelsize() -> (width::Int, height::Int)
     pixelsize(relative_height)
     pixelsize(relative_height, relative_width)
     pixelsize(relative_height; ratio=width_to_height_ratio)
 
 Return the size of the terminal window in pixels. With arguments, return a tuple that can be
-passed to a plot command to set the size of the figure.
+passed to a plot command to set the size of the figure. Returns `(0, 0)` if stdin isn't a
+tty or the terminal doesn't answer the query.
 
 See also: `GhosttyExtensions.cellsize`, `Base.displaysize`.
 
@@ -68,7 +69,7 @@ See also: `GhosttyExtensions.cellsize`, `Base.displaysize`.
 
 Make plots that are a bit smaller than half of the terminal height to fit two plots in the
 window. Make them twice as wide as they are tall. Add scaling to make the font bigger on
-high resolution screens like Macs with Retina displays.
+high-resolution screens like Macs with Retina displays.
 ```
 using Plots
 default(; size=pixelsize(0.45; ratio=2), thickness_scaling=1.5)
@@ -81,6 +82,7 @@ plot(rand(10); size=pixelsize(1/3))
 ```
 """
 function pixelsize()
+    stdin isa Base.TTY || return (0, 0)
     term = REPL.Terminals.TTYTerminal("xterm", stdin, stdout, stderr)
     REPL.Terminals.raw!(term, true)
     Base.start_reading(stdin)
@@ -91,7 +93,7 @@ function pixelsize()
     return parse(Int, width), parse(Int, height)
 end
 
-function pixelsize(relative_height, relative_width=1; ratio=0)
+function pixelsize(relative_height, relative_width = 1; ratio = 0)
     width, height = pixelsize()
     rows, columns = displaysize(stdout)
     cell_height = height ÷ rows
@@ -102,14 +104,16 @@ function pixelsize(relative_height, relative_width=1; ratio=0)
 end
 
 """
-    GhosttyExtensions.cellsize() -> Tuple(width::Int, height::Int)
+    GhosttyExtensions.cellsize() -> (width::Int, height::Int)
 
 Return the size of a terminal cell in pixels. A cell is the space that's occupied by one
-character. This function is intended for debugging and is not exported.
+character. This function is intended for debugging and is not exported. Returns `(0, 0)`
+if stdin isn't a tty or the terminal doesn't answer the query.
 
 See also: `pixelsize`, `Base.displaysize`.
 """
 function cellsize()
+    stdin isa Base.TTY || return (0, 0)
     term = REPL.Terminals.TTYTerminal("xterm", stdin, stdout, stderr)
     REPL.Terminals.raw!(term, true)
     Base.start_reading(stdin)
