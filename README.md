@@ -5,8 +5,11 @@ A Julia package that supports some advanced features of the
 [WezTerm](https://wezfurlong.org/wezterm/index.html) or
 [Kitty](https://sw.kovidgoyal.net/kitty/) should work as well.
 
-All features work over ssh. There's no external dependency and _TTFP_, the time it adds to
-the first prompt, should not be noticeable.
+All features work over ssh. There's no external dependency and _TTFP_, the time
+it adds to the first prompt, should not be noticeable.
+
+It works fine alongside TerminalPager.jl but has **not** been tested for
+compatibility with other packages that alter the REPL.
 
 > [!IMPORTANT]
 >
@@ -14,8 +17,7 @@ the first prompt, should not be noticeable.
 >
 > This version is tested on Julia 1.12 and 1.13. The `[compat]` bound also allows 1.10 and
 > 1.11 since nothing in the code appears to require newer internals, but this is
-> **untested** — try at your own risk. It works fine alongside TerminalPager.jl but has
-> **not** been tested for compatibility with other packages that alter the REPL.
+> **untested** — try at your own risk.
 >
 > GhosttyExtensions v0.8.1 is still compatible with Julia 1.10–1.12. Refer to the README on
 > the v0.8.1 branch.
@@ -25,24 +27,28 @@ the first prompt, should not be noticeable.
 > On the other hand, you can no longer bind F12, Shift-Command-ArrowKey etc.
 >
 > The key bindings that were defined in v0.8.1 and earlier have been removed. You need to
-> set up your own keymap, see the example in section "Installation" below.
+> set up your own keymap, see the example in [Installation](#installation) below.
 >
-> A `page` function has been added that calls the system's `less` command-line tool.
+> See the new feature [Pager](#pager) that calls the system's `less` command-line tool.
 
 ## Features
 
 ### Shell integration
 
-- OSC 2 terminal title shows the active project and—if `SSH_TTY` is set—the remote hostname.
+- The terminal title shows the active project and — if the environment variable
+  `SSH_TTY` is set — the remote hostname (OSC 2).
 
-- OSC 52 pasteboard support with `pbcopy(x)` and `pbpaste()` enables copy'n'paste over ssh.
+- `pbcopy(x)` and `pbpaste()` add pasteboard support for copy'n'paste that works
+  over ssh (OSC 52).
 
-- OSC 133 prompt marking for the prompt modes `julia>`, `shell>`, and `help?>` enables
-  jumping back and forth through the prompts (Ghostty defaults: Shift-Command-Up/Down) or
-  selecting & copying the output between two prompts (Command-Triple-Click).
+- OSC 133 prompt marking for the prompt modes `julia>`, `shell>`, and `help?>`
+  enables jumping back and forth through the prompts (Ghostty defaults:
+  Shift-Command-Up/Down) or selecting & copying the output between two prompts
+  (Command-Triple-Click).
 
-- Mouse click events require Ghostty 1.3.0+. Limitation: the cursor does not move up or down
-  on multi-line prompts — it only moves left or right on the line it's on.
+- Mouse click events require Ghostty 1.3.0+. Limitation: the cursor does not
+  move up or down on multi-line prompts — it only moves left or right on the
+  line it's on.
 
 ### Inline plotting
 
@@ -64,20 +70,21 @@ Get the size of the terminal window in pixels with `pixelsize()`. See the docstr
 
 ### Pager
 
-Send anything to the `less` pager with `page(x)` or `x |> page`. It renders the full REPL
-representation of `x`—colored and not truncated—and pages it with horizontal scrolling for
-wide output (chopped long lines). A string is paged verbatim.
+- `page(x)` or `x |> page` sends anything to the `less` command-line tool that
+  usually comes with BSD, Linux, and macOS. It renders the full REPL
+  representation of `x` — colored and not truncated — and pages it with
+  horizontal scrolling for wide output (chopped long lines). A string is paged
+  verbatim.
 
-Pass extra arguments to `less` with the `lessargs` keyword—a single string or a collection
-of strings—e.g. `page(x; lessargs="--header=1,4")`.
+  Extra arguments can be passed to `less` with the `lessargs` keyword, e.g.
+  `page(x; lessargs="--header=1,8")` for one frozen header line and 8 frozen
+  columns.
 
-The F1 help also uses this pager (see below).
+The F1 help also uses this pager via `invoke_help` (see below).
 
-`page()` calls the `less` command-line tool that usually comes with BSD, Linux, and macOS.
+You can ignore this feature if you have TerminalPager.jl installed.
 
-You can just ignore this feature if you have TerminalPager.jl installed.
-
-### Extra functions for key bindings (unexported)
+### Extra functions for key bindings (not exported)
 
 - `invoke_help` shows the help for the selection or the word under the cursor in the pager.
 
@@ -93,17 +100,18 @@ You can just ignore this feature if you have TerminalPager.jl installed.
 - `toggle_suffix` appends a string to the buffer, e.g. `|> page` to send the line's result
   to the pager, or removes it if it's already there.
 
-- `run_pasteboard` pastes from the system clipboard via OSC 52 and executes. This is
-  intended for automation. For instance, you may want to use AppleScript or another tool to
-  copy code from your GUI editor and paste & execute it in Ghostty.
+- `run_pasteboard` pastes from the system clipboard via OSC 52 and executes.
+  This is intended for automation. For instance, you may want to use AppleScript
+  or another tool to copy code from your GUI editor and paste & execute it in
+  Ghostty.
 
-  Each time, you'll be asked for permission to access the system clipboard, unless you opt
-  in permanently in `~/.config/ghostty/config.ghostty`:
+  Each time, you'll be asked for permission to access the system clipboard,
+  unless you opt in permanently in `~/.config/ghostty/config.ghostty`:
 
   `clipboard-read = allow`
 
-  Note that this is a security risk as any program running in the terminal—including a
-  rogue AI agent—can stalk your clipboard.
+  Note that allowing it permanently is a security risk as any program running in
+  the terminal — including a rogue AI agent — can stalk your clipboard.
 
 - `select_previous_word`, `select_next_word` start or extend a selection by word.
 
@@ -113,21 +121,21 @@ You can just ignore this feature if you have TerminalPager.jl installed.
 - `select_to_start_of_buffer`, `select_to_end_of_buffer` start or extend a selection up to
   the start/end of the buffer.
 
-### Utility functions (unexported)
+### Utility functions (not exported)
 
 Explore key strokes (inspired by
 [fish_keyreader](https://fishshell.com/docs/current/cmds/fish_key_reader.html),
 useful for making your own keybinds):
 
 ```julia
-GhosttyExtensions.keyreader()
+julia> GhosttyExtensions.keyreader()
 ```
 
 Return the size of a terminal cell in pixels. A cell is the space that's occupied by one
 character (useful for debugging):
 
 ```julia
-GhosttyExtensions.cellsize()
+julia> GhosttyExtensions.cellsize()
 ```
 
 ## Installation
