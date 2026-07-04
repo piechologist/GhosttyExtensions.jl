@@ -60,12 +60,8 @@ This uses OSC 52 and thus works via ssh.
 Returns `""` if stdin isn't a tty or the terminal doesn't answer the query.
 """
 function pbpaste()
-    stdin isa Base.TTY || return ""
-    term = REPL.Terminals.TTYTerminal("xterm", stdin, stdout, stderr)
-    REPL.Terminals.raw!(term, true)
-    Base.start_reading(stdin)
-    print(stdout, "\e]52;c;?\a")
-    data = readuntil(stdin, "\e\\")
+    data = query_terminal("\e]52;c;?\a", "\e\\")
+    data ≡ nothing && return ""
     startswith(data, "\e]52;c;") || return ""
     return String(base64decode(chopprefix(data, "\e]52;c;")))
 end

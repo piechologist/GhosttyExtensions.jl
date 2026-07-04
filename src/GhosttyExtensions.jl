@@ -56,6 +56,31 @@ function __init__()
     return nothing
 end
 
+# Write `request` to the terminal and block for its answer up to `terminator`, in raw mode
+# so the response bytes don't leak into the REPL buffer.
+# Returns `nothing` if stdin isn't a tty, or if the terminal doesn't answer within `timeout`
+# seconds. Most terminals answer these queries in well under a millisecond; half a second
+# is a generous bound for a slow/loaded terminal while still capping the wait instead of
+# blocking forever (e.g. tmux/screen without escape-sequence passthrough).
+function query_terminal(request::AbstractString, terminator; timeout = 0.5)
+    stdin isa Base.TTY || return nothing
+    term = REPL.Terminals.TTYTerminal("xterm", stdin, stdout, stderr)
+    REPL.Terminals.raw!(term, true)
+    Base.start_reading(stdin)
+    print(stdout, request)
+    task = @async readuntil(stdin, terminator)
+    timer = Timer(timeout) do _
+        istaskdone(task) || Base.schedule(task, InterruptException(); error = true)
+    end
+    return try
+        fetch(task)
+    catch
+        nothing
+    finally
+        close(timer)
+    end
+end
+
 # Precompile statements for the code paths that run on every REPL startup
 # (`_atreplinit_hook` is what Julia's `atreplinit` machinery actually calls — it's a
 # regular top-level function rather than a closure specifically so it *can* be targeted
