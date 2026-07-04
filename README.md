@@ -35,54 +35,53 @@ compatibility with other packages that alter the REPL.
 
 ### Shell integration
 
-- The terminal title shows the active project and — if the environment variable
-  `SSH_TTY` is set — the remote hostname (OSC 2).
+The terminal title shows the active project and — if the environment variable
+`SSH_TTY` is set — the remote hostname (OSC 2).
 
-- `pbcopy(x)` and `pbpaste()` add pasteboard support for copy'n'paste that works
-  over ssh (OSC 52).
+`pbcopy(x)` and `pbpaste()` add pasteboard support for copy'n'paste that works
+over ssh (OSC 52).
 
-- OSC 133 prompt marking for the prompt modes `julia>`, `shell>`, and `help?>`
-  enables jumping back and forth through the prompts (Ghostty defaults:
-  Shift-Command-Up/Down) or selecting & copying the output between two prompts
-  (Command-Triple-Click).
+Prompt marking (OSC 133) for the prompt modes `julia>`, `shell>`, and `help?>`
+enables jumping back and forth through the prompts (Ghostty defaults:
+Shift-Command-Up/Down) or selecting & copying the output between two prompts
+(Command-Triple-Click).
 
-- Mouse click events require Ghostty 1.3.0+. Limitation: the cursor does not
-  move up or down on multi-line prompts — it only moves left or right on the
-  line it's on.
+Mouse click events move the cursor to the clicked position in the command
+buffer. This requires Ghostty 1.3.0+. Limitation: the cursor does not move up or
+down on multi-line prompts — it only moves left or right on the line it's on.
 
 ### Inline plotting
 
-Kitty graphics protocol for use with Plots.jl. Plots are shown as PNGs in their original
-sizes. There is no scaling. Adjust the plot size within Plots.jl (see below). This
-approach makes plots less blurred and there's no need for any dependencies. Use
-KittyTerminalImages.jl if you need more features.
+This feature implements the Kitty graphics protocol for use with Plots.jl. Plots
+are shown in the terminal window as PNGs in their original sizes. There is no
+scaling, which makes plots less blurred, and there's no need for any
+dependencies. Use KittyTerminalImages.jl if you need more features.
 
-Inline plotting is automatically activated in interactive sessions and works over ssh.
+Inline plotting is automatically activated in interactive sessions and works
+over ssh. In non-interactive scripts, call `inlineplotting()` once to
+initialize, and remember to wrap the plot commands with `display(...)`. Switch
+back to the default (e.g., GKSQT.app on macOS) with `inlineplotting(false)` —
+this only works on the local machine.
 
-In non-interactive scripts, call `inlineplotting()` once to initialize.
-Remember to wrap the plot commands with `display(...)`.
-
-Switch back to the default (e.g., GKSQT.app on macOS) with `inlineplotting(false)`.
-Plotting to a GUI app works only on the local machine.
-
-Get the size of the terminal window in pixels with `pixelsize()`. See the docstring
-(`?pixelsize`) for examples about adjusting the plot size or setting default sizes.
+Get the size of the terminal window in pixels with `pixelsize()`. See the
+docstring (`?pixelsize`) for examples about adjusting the plot size or setting
+default sizes. There's also an example in [Installation](#installation) below.
 
 ### Pager
 
-- `page(x)` or `x |> page` sends anything to the `less` command-line tool that
-  usually comes with BSD, Linux, and macOS. It renders the full REPL
-  representation of `x` — colored and not truncated — and pages it with
-  horizontal scrolling for wide output (chopped long lines). A string is paged
-  verbatim.
+You can ignore this feature if you have TerminalPager.jl installed.
 
-  Extra arguments can be passed to `less` with the `lessargs` keyword, e.g.
-  `page(x; lessargs="--header=1,8")` for one frozen header line and 8 frozen
-  columns.
+`page(x)` or `x |> page` sends anything to the `less` command-line tool that
+usually comes with BSD, Linux, and macOS. It renders the full REPL
+representation of `x` — colored and not truncated — and pages it with horizontal
+scrolling for wide output (using `less -S` to chop long lines). A string is
+paged verbatim.
+
+Extra arguments can be passed to `less` with the `lessargs` keyword, e.g.
+`page(x; lessargs="--header=1,8")` for 1 frozen header line and 8 frozen
+columns.
 
 The F1 help also uses this pager via `invoke_help` (see below).
-
-You can ignore this feature if you have TerminalPager.jl installed.
 
 ### Extra functions for key bindings (not exported)
 
@@ -94,11 +93,11 @@ You can ignore this feature if you have TerminalPager.jl installed.
 
 - `cut_region` cuts the selection or the whole buffer to the system clipboard via OSC 52.
 
-- `toggle_prefix` prepends a string to the buffer, e.g. `@time`, or removes it if it's
-  already there.
+- `toggle_prefix` prepends a string to the buffer, e.g. `@time`, or removes it
+  if it's already there.
 
-- `toggle_suffix` appends a string to the buffer, e.g. `|> page` to send the line's result
-  to the pager, or removes it if it's already there.
+- `toggle_suffix` appends a string to the buffer, e.g. `|> page` to send the
+  line's result to the pager, or removes it if it's already there.
 
 - `run_pasteboard` pastes from the system clipboard via OSC 52 and executes.
   This is intended for automation. For instance, you may want to use AppleScript
@@ -115,11 +114,11 @@ You can ignore this feature if you have TerminalPager.jl installed.
 
 - `select_previous_word`, `select_next_word` start or extend a selection by word.
 
-- `select_to_start_of_line`, `select_to_end_of_line` start or extend a selection up to
-  the start/end of the line.
+- `select_to_start_of_line`, `select_to_end_of_line` start or extend a selection
+  up to the start/end of the line.
 
-- `select_to_start_of_buffer`, `select_to_end_of_buffer` start or extend a selection up to
-  the start/end of the buffer.
+- `select_to_start_of_buffer`, `select_to_end_of_buffer` start or extend a
+  selection up to the start/end of the buffer.
 
 ### Utility functions (not exported)
 
@@ -131,8 +130,8 @@ useful for making your own keybinds):
 julia> GhosttyExtensions.keyreader()
 ```
 
-Return the size of a terminal cell in pixels. A cell is the space that's occupied by one
-character (useful for debugging):
+Return the size of a terminal cell in pixels. A cell is the space that's
+occupied by one character (useful for debugging):
 
 ```julia
 julia> GhosttyExtensions.cellsize()
@@ -146,8 +145,8 @@ This package is not available in Julia's general registry. It can be added or de
 Pkg> add https://github.com/piechologist/GhosttyExtensions.jl
 ```
 
-You need to set up your own key bindings in `~/.julia/config/startup.jl`. A comprehensive
-example:
+You need to set up your own key bindings in `~/.julia/config/startup.jl`.
+A comprehensive example:
 
 ```julia
 using GhosttyExtensions
