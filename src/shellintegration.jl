@@ -20,7 +20,7 @@ color and no truncation — before paging it, e.g. `rand(200, 100) |> page`.
 """
 function page(text::AbstractString; lessargs = String[])
     isempty(text) && return nothing
-    prompt = raw"lines %lt-%lb?L/%L.?e (END):?pB %pB\%..?c  first column %c."
+    prompt = raw"lines %lt-%lb?L/%L.?e (END):?pB %pB\%..?c │ first char #%c."
     try
         open(`less -RKS -PM$prompt $lessargs`, "w", stdout) do io
             write(io, text)
