@@ -20,6 +20,7 @@ color and no truncation — before paging it, e.g. `rand(200, 100) |> page`.
 """
 function page(text::AbstractString; lessargs = String[])
     isempty(text) && return nothing
+    set_terminal_title(" (pager)")
     prompt = raw"lines %lt-%lb?L/%L.?e (END):?pB %pB\%..?c │ first char #%c."
     try
         open(`less -RKS -PM$prompt $lessargs`, "w", stdout) do io
@@ -28,6 +29,8 @@ function page(text::AbstractString; lessargs = String[])
     catch err
         # Quitting the pager before all input is read closes the pipe mid-write; ignore that.
         err isa Base.IOError && err.code == Base.UV_EPIPE || rethrow()
+    finally
+        set_terminal_title()
     end
     return nothing
 end
@@ -66,11 +69,12 @@ function pbpaste()
     return String(base64decode(chopprefix(data, "\e]52;c;")))
 end
 
-function set_terminal_title()
-    remote_host = haskey(ENV, "SSH_TTY") ? split(gethostname(), '.')[1] * " — " : ""
+function set_terminal_title(suffix = "")
+    remote_host = haskey(ENV, "SSH_TTY") ?
+        Sys.username() * "@" * first(split(gethostname(), '.')) * " — " : ""
     project = dirname(Base.active_project())
     title = contains(project, "/.julia/environments/") ? "julia @" : "julia "
-    print("\e]2;", remote_host, title, basename(project), "\e\\")
+    print("\e]2;", remote_host, title, basename(project), suffix, "\e\\")
     return nothing
 end
 

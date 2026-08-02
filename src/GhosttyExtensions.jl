@@ -99,6 +99,7 @@ precompile(pbcopy, (String,))
 precompile(pbpaste, ())
 precompile(page, (String,))
 precompile(set_terminal_title, ())
+precompile(set_terminal_title, (String,))
 precompile(keyreader, ())
 
 end # module GhosttyExtensions

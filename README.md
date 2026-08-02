@@ -36,7 +36,7 @@ compatibility with other packages that alter the REPL.
 ### Shell integration
 
 The terminal title shows the active project and — if the environment variable
-`SSH_TTY` is set — the remote hostname (OSC 2).
+`SSH_TTY` is set — the remote user@hostname (OSC 2).
 
 `pbcopy(x)` and `pbpaste()` add pasteboard support for copy'n'paste that works
 over ssh (OSC 52).
