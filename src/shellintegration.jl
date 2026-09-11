@@ -69,9 +69,15 @@ function pbpaste()
     return String(base64decode(chopprefix(data, "\e]52;c;")))
 end
 
+@static if isdefined(Sys, :username)
+    const _username = Sys.username
+else
+    _username() = get(ENV, "USER", "") # Sys.username() requires Julia 1.11+
+end
+
 function set_terminal_title(suffix = "")
     remote_host = haskey(ENV, "SSH_TTY") ?
-        Sys.username() * "@" * first(split(gethostname(), '.')) * " — " : ""
+        _username() * "@" * first(split(gethostname(), '.')) * " — " : ""
     project = dirname(Base.active_project())
     title = contains(project, "/.julia/environments/") ? "julia @" : "julia "
     print("\e]2;", remote_host, title, basename(project), suffix, "\e\\")
@@ -79,6 +85,19 @@ function set_terminal_title(suffix = "")
 end
 
 function shellintegration(repl)
+    # `atreplinit` hooks run *before* the REPL builds `repl.interface`, so the only reason
+    # there is an interface to hook into is that the keymap block in startup.jl built it
+    # first. `atreplinit` prepends (`pushfirst!`), so that block has to be registered after
+    # `using GhosttyExtensions` to run before this. Without it, bail out with something
+    # more helpful than `UndefRefError` — inline plotting still works.
+    if !isdefined(repl, :interface)
+        @warn """GhosttyExtensions: prompt marking and the terminal title are disabled
+            because the REPL interface has not been set up yet. Add the `atreplinit` block
+            from the README to ~/.julia/config/startup.jl below `using GhosttyExtensions`.
+            """
+        return nothing
+    end
+    
     # Notes:
     # 1. prompt_prefix & prompt_suffix may get fired many times when editing a command or
     #    scrolling through the command history. We use `isexecuting` to track the current
