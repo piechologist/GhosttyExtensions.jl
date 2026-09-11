@@ -6,58 +6,21 @@ using REPL.LineEdit
 import Base: display
 
 export inlineplotting, pixelsize
-export pbcopy, pbpaste
+export page, pbcopy, pbpaste
 
 include("lineedit.jl")
 include("plotting.jl")
 include("shellintegration.jl")
 
-# Extra key bindings.
-#
-# Tip: the following keys are not used in LineEdit.jl and can be bound to custom functions:
-# - Meta + all capital letters except O and W
-# - Meta + any of aghijkoqrsvxz
-# - ^o and ^v
-#
-# Note: the history keymap is active when the cursor is at the end of the buffer. It will
-# swallow the first part of certain bindings and the remaining part will leak into the
-# terminal. We need to add wildcards for these bindings to let them pass through.
-# See `LineEdit.prefix_history_keymap` for the default wildcards.
-const extra_keymap = Dict{Any,Any}(
-    "\eOQ" => (s, o...) -> parenthesize(s), # F2
-    "\e[24~" => (s, o...) -> toggle_prefix(s, "@time"), # F12
-    "\e[24;2~" => (s, o...) -> toggle_prefix(s, "@code_warntype"), # Shift-F12
-    "\e[99;5u" => (s, o...) -> copy_region(s), # Control-Command-C
-    "\e[120;5u" => (s, o...) -> cut_region(s), # Control-Command-X
-    "\eC" => (s, o...) -> copy_region(s),
-    "\eX" => (s, o...) -> cut_region(s),
-    "\eV" => (s, o...) -> run_pasteboard(s),
-    # Shift-Option-Up/Down/Right/Left:
-    "\e[1;4A" => (s, o...) -> select_to_start_of_buffer(s),
-    "\e[1;4B" => (s, o...) -> select_to_end_of_buffer(s),
-    "\e[1;4C" => (s, o...) -> LineEdit.edit_shift_move(s, LineEdit.edit_move_word_right),
-    "\e[1;4D" => (s, o...) -> LineEdit.edit_shift_move(s, LineEdit.edit_move_word_left),
-    # Shift-Command-Right/Left:
-    "\e[1;10C" => (s, o...) -> select_to_end_of_line(s),
-    "\e[1;10D" => (s, o...) -> select_to_start_of_line(s),
-)
-
-const extra_wildcards = Dict{Any,Any}(
-    "\e[24~" => "*",    # F12
-    "\e[24;2~" => "*",  # Shift-F12
-    "\e[99;5u" => "*",  # Control-Command-C
-    "\e[120;5u" => "*", # Control-Command-X
-    "\e[1;4*" => "*",   # Shift-Option-ArrowKeys
-    "\e[1;10*" => "*",  # Shift-Command-ArrowKeys
-)
-
 """
-    GhosttyExtensions.keyreader() -> nothing
+    GhosttyExtensions.keyreader() -> Nothing
 
 Put the terminal in raw mode and show the keyboard input (including escape sequences) in a
-human readable form. This function is intended for debugging and is not exported.
+human readable form. This function is intended for debugging and is not exported. Errors if
+stdin isn't a tty.
 """
 function keyreader()
+    stdin isa Base.TTY || error("keyreader() requires an interactive terminal")
     println("Press backspace twice to exit the key reader...")
     term = REPL.Terminals.TTYTerminal("xterm", stdin, stdout, stderr)
     REPL.Terminals.raw!(term, true)
@@ -67,7 +30,7 @@ function keyreader()
         if isprint(c)
             print(c)
         else
-            printstyled('\n', escape_string(string(c)); color=:red)
+            printstyled('\n', escape_string(string(c)); color = :red)
         end
         if c == '\x7f'
             exit_on_next_bksp && break
@@ -77,25 +40,66 @@ function keyreader()
         end
     end
     println()
+    return nothing
 end
 
-function __init__()
-    atreplinit() do repl
-        if isinteractive() && repl isa REPL.LineEditREPL
-            if isdefined(repl, :interface)
-                error("GhosttyExtensions is not fully functional: another package has already initialized the REPL")
-            end
-
-            # Set up the REPL with the custom key bindings.
-            merge!(LineEdit.prefix_history_keymap, extra_wildcards)
-            repl.interface = REPL.setup_interface(repl; extra_repl_keymap=extra_keymap)
-
-            # Set up the shell integration and KittyDisplay.
-            shellintegration(repl)
-            inlineplotting()
-        end
+function _atreplinit_hook(repl)
+    if isinteractive() && repl isa REPL.LineEditREPL
+        shellintegration(repl)
+        inlineplotting()
     end
     return nothing
 end
+
+function __init__()
+    atreplinit(_atreplinit_hook)
+    return nothing
+end
+
+# Write `request` to the terminal and block for its answer up to `terminator`, in raw mode
+# so the response bytes don't leak into the REPL buffer.
+# Returns `nothing` if stdin isn't a tty, or if the terminal doesn't answer within `timeout`
+# seconds. Most terminals answer these queries in well under a millisecond; half a second
+# is a generous bound for a slow/loaded terminal while still capping the wait instead of
+# blocking forever (e.g. tmux/screen without escape-sequence passthrough).
+function query_terminal(request::AbstractString, terminator; timeout = 0.5)
+    stdin isa Base.TTY || return nothing
+    term = REPL.Terminals.TTYTerminal("xterm", stdin, stdout, stderr)
+    REPL.Terminals.raw!(term, true)
+    Base.start_reading(stdin)
+    print(stdout, request)
+    task = @async readuntil(stdin, terminator)
+    timer = Timer(timeout) do _
+        istaskdone(task) || Base.schedule(task, InterruptException(); error = true)
+    end
+    return try
+        fetch(task)
+    catch
+        nothing
+    finally
+        close(timer)
+    end
+end
+
+# Precompile statements for the code paths that run on every REPL startup
+# (`_atreplinit_hook` is what Julia's `atreplinit` machinery actually calls — it's a
+# regular top-level function rather than a closure specifically so it *can* be targeted
+# here) plus the functions users are likely to call right from `startup.jl`.
+precompile(_atreplinit_hook, (REPL.LineEditREPL,))
+precompile(shellintegration, (REPL.LineEditREPL,))
+precompile(inlineplotting, ())
+precompile(inlineplotting, (Bool,))
+precompile(display, (KittyDisplay, Vector{UInt8}))
+precompile(display, (KittyDisplay, MIME"image/png", Vector{UInt8}))
+precompile(pixelsize, ())
+precompile(pixelsize, (Float64,))
+precompile(pixelsize, (Float64, Float64))
+precompile(cellsize, ())
+precompile(pbcopy, (String,))
+precompile(pbpaste, ())
+precompile(page, (String,))
+precompile(set_terminal_title, ())
+precompile(set_terminal_title, (String,))
+precompile(keyreader, ())
 
 end # module GhosttyExtensions

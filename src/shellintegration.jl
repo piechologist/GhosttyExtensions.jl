@@ -3,6 +3,48 @@
 # ------------------------------------------------------------------------------------------
 
 """
+    page(text::AbstractString; lessargs=String[]) -> Nothing
+    page(x; lessargs=String[]) -> Nothing
+
+Display `text` in the `less` pager (flags `-RKS`: keep ANSI colors, quit on interrupt, chop
+long lines instead of wrapping). The prompt shows the line range like less's default `-M`
+prompt (`lines %lt-%lb/%L`) plus, once you scroll right, the leftmost visible column.
+`less` reads its keystrokes from `/dev/tty`, so it coexists with the REPL being mid-
+keystroke, and its alternate screen restores the prior view on quit so nothing lingers.
+
+`lessargs` passes extra arguments to `less`; give a single string or a collection of
+strings, e.g. `page(text; lessargs="--header=1,4")`.
+
+The second form renders any object `x` to its full REPL (`text/plain`) representation — with
+color and no truncation — before paging it, e.g. `rand(200, 100) |> page`.
+"""
+function page(text::AbstractString; lessargs = String[])
+    isempty(text) && return nothing
+    set_terminal_title(" (pager)")
+    prompt = raw"lines %lt-%lb?L/%L.?e (END):?pB %pB\%..?c │ first char #%c."
+    try
+        open(`less -RKS -PM$prompt $lessargs`, "w", stdout) do io
+            write(io, text)
+        end
+    catch err
+        # Quitting the pager before all input is read closes the pipe mid-write; ignore that.
+        err isa Base.IOError && err.code == Base.UV_EPIPE || rethrow()
+    finally
+        set_terminal_title()
+    end
+    return nothing
+end
+
+function page(x; lessargs = String[])
+    buf = IOBuffer()
+    # No :displaysize/:limit -> render `x` in full and let `less -S` scroll wide output.
+    io = IOContext(buf, :color => true)
+    show(io, MIME("text/plain"), x)
+    page(String(take!(buf)); lessargs)
+    return nothing
+end
+
+"""
     pbcopy(x) -> Nothing
 
 Copy the object `x` to the system pasteboard as text.
@@ -18,31 +60,49 @@ end
 
 Query the system pasteboard and return its content as `String`.
 This uses OSC 52 and thus works via ssh.
+Returns `""` if stdin isn't a tty or the terminal doesn't answer the query.
 """
 function pbpaste()
-    term = REPL.Terminals.TTYTerminal("xterm", stdin, stdout, stderr)
-    REPL.Terminals.raw!(term, true)
-    Base.start_reading(stdin)
-    print(stdout, "\e]52;c;?\a")
-    data = readuntil(stdin, "\e\\")
+    data = query_terminal("\e]52;c;?\a", "\e\\")
+    data ≡ nothing && return ""
     startswith(data, "\e]52;c;") || return ""
     return String(base64decode(chopprefix(data, "\e]52;c;")))
 end
 
-function set_terminal_title()
-    remote_host = haskey(ENV, "SSH_TTY") ? split(gethostname(), '.')[1] * " — " : ""
+@static if isdefined(Sys, :username)
+    const _username = Sys.username
+else
+    _username() = get(ENV, "USER", "") # Sys.username() requires Julia 1.11+
+end
+
+function set_terminal_title(suffix = "")
+    remote_host = haskey(ENV, "SSH_TTY") ?
+        _username() * "@" * first(split(gethostname(), '.')) * " — " : ""
     project = dirname(Base.active_project())
     title = contains(project, "/.julia/environments/") ? "julia @" : "julia "
-    print("\e]2;", remote_host, title, basename(project), "\e\\")
+    print("\e]2;", remote_host, title, basename(project), suffix, "\e\\")
     return nothing
 end
 
 function shellintegration(repl)
+    # `atreplinit` hooks run *before* the REPL builds `repl.interface`, so the only reason
+    # there is an interface to hook into is that the keymap block in startup.jl built it
+    # first. `atreplinit` prepends (`pushfirst!`), so that block has to be registered after
+    # `using GhosttyExtensions` to run before this. Without it, bail out with something
+    # more helpful than `UndefRefError` — inline plotting still works.
+    if !isdefined(repl, :interface)
+        @warn """GhosttyExtensions: prompt marking and the terminal title are disabled
+            because the REPL interface has not been set up yet. Add the `atreplinit` block
+            from the README to ~/.julia/config/startup.jl below `using GhosttyExtensions`.
+            """
+        return nothing
+    end
+    
     # Notes:
     # 1. prompt_prefix & prompt_suffix may get fired many times when editing a command or
     #    scrolling through the command history. We use `isexecuting` to track the current
     #    state and print the post-exec mark only once.
-    # 2. We use `project` similarily. Base.ACTIVE_PROJECT is very cheap to access and we
+    # 2. We use `project` similarly. Base.ACTIVE_PROJECT is very cheap to access and we
     #    read it frequently to check if the project has changed. If it has, we call the
     #    relatively expensive set_terminal_title().
     # 3. Ghostty clears the prompt on window resize and sends SIGWINCH, expecting the shell
@@ -57,7 +117,7 @@ function shellintegration(repl)
     #    See:
     #    https://github.com/ghostty-org/ghostty/blob/2502ca294efe5aa9722c36e25b2252b0150054e9/src/terminal/osc/parsers/semantic_prompt.zig#L218
     isexecuting = true
-    project::Union{Nothing,String} = "not initialized yet"
+    project::Union{Nothing, String} = "not initialized yet"
 
     # Prompt marking and cursor shaping for the first three modes julia>, shell>, help?>.
     for mode in repl.interface.modes[1:3]
