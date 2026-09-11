@@ -16,8 +16,7 @@ compatibility with other packages that alter the REPL.
 > **BREAKING CHANGES IN VERSION 0.9.0**
 >
 > This version is tested on Julia 1.12 and 1.13. The `[compat]` bound also allows 1.10 and
-> 1.11 since nothing in the code appears to require newer internals, but this is
-> **untested** — try at your own risk.
+> 1.11 but neither version has been **runtime-tested** recently — try at your own risk.
 >
 > GhosttyExtensions v0.8.1 is still compatible with Julia 1.10–1.12. Refer to the README on
 > the v0.8.1 branch.
